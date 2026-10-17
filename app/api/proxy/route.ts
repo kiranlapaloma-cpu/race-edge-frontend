@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     const routes: Record<string, string> = {
       meetings: '/api/cards/meetings',
       races: '/api/cards/races',
+      predictions: '/api/cards/predictions',
     };
 
     if (!action || !routes[action]) {
@@ -66,7 +67,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data, {
       status: upstream.status,
-      headers: { 'Cache-Control': 'no-store' },
+      headers: {
+        'Cache-Control': 'no-store',
+      },
     });
   } catch {
     return NextResponse.json(
