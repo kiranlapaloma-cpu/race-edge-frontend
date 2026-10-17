@@ -96,7 +96,10 @@ export default function RaceControl() {
   async function login(e: React.FormEvent) {
     e.preventDefault(); setLoginError('');
     const response = await fetch('/api/login', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({password}) });
-    if (!response.ok) { setLoginError('Incorrect password or login is not configured.'); return; }
+    if (!response.ok) {
+    setLoginError(`Login failed (HTTP ${response.status})`);
+    return;
+  } return; }
     setPassword(''); setLoggedIn(true); loadMeetings(date);
   }
   async function logout() { await fetch('/api/logout', { method:'POST' }); setLoggedIn(false); setData(null); setMeetings([]); }
