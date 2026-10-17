@@ -1,7 +1,85 @@
-import { NextResponse } from 'next/server';
-import { sessionCookieName } from '../../../lib/auth';
-export async function POST() {
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set(sessionCookieName, '', { httpOnly: true, maxAge: 0, path: '/' });
-  return response;
+
+import { NextRequest, NextResponse } from 'next/server';
+import { isAuthenticated } from '../../../lib/auth';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
+  try {
+    if (!(await isAuthenticated())) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const baseUrl = process.env.RACE_EDGE_API_URL;
+    const apiKey = process.env.RACE_EDGE_API_KEY;
+
+    if (!baseUrl || !apiKey) {
+      return NextResponse.json(
+        { error: 'Backend configuration missing' },
+        { status: 500 }
+      );
+    }
+
+    const params = request.nextUrl.searchParams;
+    const action = params.get('action');
+
+    const routes: Record<string, string> = {
+      meetings: '/api/cards/meetings',
+      races: '/api/cards/races',
+    };
+
+    if (!action || !routes[action]) {
+      return NextResponse.json(
+        { error: 'Unsupported action' },
+        { status: 400 }
+      );
+    }
+
+    const url = new URL(
+      routes[action],
+      baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+    );
+
+    for (const [key, value] of params.entries()) {
+      if (key !== 'action') {
+        url.searchParams.append(key, value);
+      }
+    }
+
+    const upstream = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'x-api-key': apiKey,
+        Accept: 'application/json',
+      },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(60000),
+    });
+
+    const contentType =
+      upstream.headers.get('content-type') || '';
+
+    if (!contentType.includes('application/json')) {
+      return NextResponse.json(
+        { error: 'Unexpected backend response' },
+        { status: 502 }
+      );
+    }
+
+    const data = await upstream.json();
+
+    return NextResponse.json(data, {
+      status: upstream.status,
+      headers: { 'Cache-Control': 'no-store' },
+    });
+  } catch {
+    return NextResponse.json(
+      { error: 'Unable to contact Race Edge backend' },
+      { status: 502 }
+    );
+  }
 }
