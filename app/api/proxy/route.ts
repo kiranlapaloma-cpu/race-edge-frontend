@@ -25,7 +25,22 @@ export async function GET(request: NextRequest) {
       predictions: '/api/cards/predictions',
     };
 
-    if (!action || !routes[action]) {
+    let path: string;
+
+    if (action === 'horse') {
+      const horse = params.get('horse');
+
+      if (!horse || !horse.trim()) {
+        return NextResponse.json(
+          { error: 'Horse name required' },
+          { status: 400 }
+        );
+      }
+
+      path = `/api/db/horse/${encodeURIComponent(horse)}`;
+    } else if (action && routes[action]) {
+      path = routes[action];
+    } else {
       return NextResponse.json(
         { error: 'Unsupported action' },
         { status: 400 }
@@ -33,12 +48,12 @@ export async function GET(request: NextRequest) {
     }
 
     const url = new URL(
-      routes[action],
+      path,
       baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
     );
 
     for (const [key, value] of params.entries()) {
-      if (key !== 'action') {
+      if (key !== 'action' && !(action === 'horse' && key === 'horse')) {
         url.searchParams.append(key, value);
       }
     }
