@@ -24,3 +24,38 @@
     min-width: 0;
   }
 }
+
+
+/* Race Edge mobile selector layout */
+@media (max-width: 700px) {
+  .selectors {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    width: 100%;
+  }
+
+  .selectors .field,
+  .selectors .field:nth-child(2),
+  .selectors .race-select {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .selectors .field input,
+  .selectors .field select,
+  .selectors .race-select select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .selectors .refresh {
+    width: 100%;
+    min-width: 0;
+  }
+}
