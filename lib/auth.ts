@@ -18,7 +18,7 @@ function equal(a: string, b: string): boolean {
 }
 export function verifyPassword(input: string): boolean {
   const password = process.env.RACE_EDGE_LOGIN_PASSWORD;
-  if (!password || password.length < 16) throw new Error('Configure a login password of at least 16 characters');
+  if (!password || password.length < 10) throw new Error('Configure a login password of at least 10 characters');
   return equal(input, password);
 }
 export function createSession(): string {
