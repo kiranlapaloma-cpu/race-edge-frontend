@@ -1,11 +1,20 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import { isAuthenticated } from '../../../lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
+    // Require a valid Race Edge login session
+    if (!(await isAuthenticated())) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const baseUrl = process.env.RACE_EDGE_API_URL;
     const apiKey = process.env.RACE_EDGE_API_KEY;
 
@@ -53,7 +62,10 @@ export async function GET(request: NextRequest) {
     );
 
     for (const [key, value] of params.entries()) {
-      if (key !== 'action' && !(action === 'horse' && key === 'horse')) {
+      if (
+        key !== 'action' &&
+        !(action === 'horse' && key === 'horse')
+      ) {
         url.searchParams.append(key, value);
       }
     }
