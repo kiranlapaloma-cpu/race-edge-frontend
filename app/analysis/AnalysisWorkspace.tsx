@@ -1200,6 +1200,11 @@ export default function AnalysisWorkspace() {
             ratings={ratings && !ratingsDirty && ratings.ready ? ratings : null}
           />
         )}
+        {result && (
+          <RacePlaneDashboard
+             result={result}
+          />
+        )}
 
         <div
           style={{
