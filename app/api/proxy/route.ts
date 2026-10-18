@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Race Analysis and Handicap Ratings requests
+// Race Analysis, Handicap Ratings and Experimental Race Plane
 export async function POST(request: NextRequest) {
   try {
     if (!(await isAuthenticated())) {
@@ -130,7 +130,11 @@ export async function POST(request: NextRequest) {
 
     const action = request.nextUrl.searchParams.get('action');
 
-    if (action !== 'analysis' && action !== 'ratings') {
+    if (
+      action !== 'analysis' &&
+      action !== 'ratings' &&
+      action !== 'race-plane'
+    ) {
       return NextResponse.json(
         { error: 'Unsupported action' },
         { status: 400 }
@@ -160,7 +164,9 @@ export async function POST(request: NextRequest) {
     const url = new URL(
       action === 'ratings'
         ? '/api/analysis/ratings'
-        : '/api/analysis/calculate',
+        : action === 'race-plane'
+          ? '/api/race-plane/calculate'
+          : '/api/analysis/calculate',
       config.baseUrl.endsWith('/')
         ? config.baseUrl
         : `${config.baseUrl}/`
