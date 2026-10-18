@@ -8,6 +8,8 @@ import {
 
 import CoreMetricsDashboard from './CoreMetricsDashboard';
 
+import RacePlaneDashboard from './RacePlaneDashboard';
+
 import {
   Activity,
   ArrowLeft,
