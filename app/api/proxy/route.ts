@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// New Race Analysis calculation requests
+// Race Analysis and Handicap Ratings requests
 export async function POST(request: NextRequest) {
   try {
     if (!(await isAuthenticated())) {
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
 
     const action = request.nextUrl.searchParams.get('action');
 
-    if (action !== 'analysis') {
+    if (action !== 'analysis' && action !== 'ratings') {
       return NextResponse.json(
         { error: 'Unsupported action' },
         { status: 400 }
@@ -158,7 +158,9 @@ export async function POST(request: NextRequest) {
     }
 
     const url = new URL(
-      '/api/analysis/calculate',
+      action === 'ratings'
+        ? '/api/analysis/ratings'
+        : '/api/analysis/calculate',
       config.baseUrl.endsWith('/')
         ? config.baseUrl
         : `${config.baseUrl}/`
