@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
       races: '/api/cards/races',
       predictions: '/api/cards/predictions',
       'historical-race': '/api/db/historical-race',
+      'form-line-validation': '/api/db/form-line-validation',
       'horse-search': '/api/db/horse-search',
     };
 
