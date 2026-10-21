@@ -45,6 +45,8 @@ export async function GET(request: NextRequest) {
       'historical-race': '/api/db/historical-race',
       'form-line-validation': '/api/db/form-line-validation',
       'horse-search': '/api/db/horse-search',
+      'horse-telemetry': '/api/db/horse-telemetry',
+      'horse-telemetry-compare': '/api/db/horse-telemetry-compare',
     };
 
     let path: string;
