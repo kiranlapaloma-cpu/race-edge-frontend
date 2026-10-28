@@ -1,3 +1,4 @@
+
 'use client';
 
 import { jsPDF } from 'jspdf';
@@ -227,62 +228,65 @@ function drawRace(pdf: jsPDF, image: string | null, race: RaceOption, card: Card
 function drawCover(pdf: jsPDF, image: string | null, date: string, meeting: string,
   races: RaceOption[], total: number) {
   pageFrame(pdf, image, meeting, date, 1, total);
-  pdf.setFont('helvetica', 'bold'); pdf.setFontSize(24); setText(pdf, INK);
-  fitText(pdf, meeting, 265, 24, 16);
-  pdf.text(meeting, 15, 65, { maxWidth: 265 });
-  pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); setText(pdf, GOLD);
-  pdf.text(date, 15, 77);
-  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(11); setText(pdf, INK);
-  pdf.text(`${races.length} races  |  Latest Form  |  Recent Best`, 15, 92);
-  pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11);
-  pdf.text('HOW TO READ THE GUIDE', 15, 111);
-  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9.5);
-  const notes = [
-    'LATEST FORM: Based on each horse\'s most recent recorded run.',
-    'RECENT BEST: Based on the best of the last three recorded runs.',
-    'BEHIND: Cumulative predicted lengths behind the scenario leader; 0.0 L may indicate a tie.',
-    'GOLD MARKER: A runner appears in both scenario Top 6 lists.',
-    'COVERAGE: Share of carded runners with usable projections in both modes.',
-    'SPREAD: Predicted separation from first to sixth, not a confidence score.',
-  ];
-  notes.forEach((note, i) => pdf.text(note, 15, 121 + i * 8));
-  pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.text('IMPORTANT', 15, 174);
-  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5);
-  const disclaimer = 'This is a race-day analytical guide, not a guarantee of results. It is based on available historical Race Edge data and is not a substitute for independent form study. Missing projections do not imply inferior ability.';
-  pdf.text(pdf.splitTextToSize(disclaimer, 265), 15, 182);
+  pdf.setFont('helvetica', 'bold'); setText(pdf, GOLD); pdf.setFontSize(10);
+  pdf.text('RACE EDGE ANALYTICS', 15, 54);
+  pdf.setFont('helvetica', 'bold'); setText(pdf, INK); pdf.setFontSize(26);
+  pdf.text('RACE DAY', 15, 72);
+  pdf.text('PREDICTION GUIDE', 15, 85);
+  setFill(pdf, GOLD); pdf.rect(15, 92, 82, 1.1, 'F');
+  pdf.setFont('helvetica', 'bold'); setText(pdf, INK);
+  fitText(pdf, meeting, 260, 19, 12);
+  pdf.text(meeting, 15, 111, { maxWidth: 260 });
+  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(11); setText(pdf, GREY);
+  pdf.text(`${date}  |  ${races.length} races`, 15, 124);
+  pdf.setFont('helvetica', 'italic'); pdf.setFontSize(11); setText(pdf, INK);
+  pdf.text('An independent, data-driven approach to horse racing analysis.', 15, 146);
+  pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); setText(pdf, GOLD);
+  pdf.text('Prepared by Kiran Singh', 15, 161);
+  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); setText(pdf, GREY);
+  const disclaimer = 'Predictions are analytical projections based on available historical performance data. They are not guaranteed outcomes and should be considered alongside independent form study.';
+  pdf.text(pdf.splitTextToSize(disclaimer, 260), 15, 177);
 }
 
-function drawSummary(pdf: jsPDF, image: string | null, date: string, meeting: string,
-  races: RaceOption[], results: CardResponse[], total: number) {
+function drawDefinitions(pdf: jsPDF, image: string | null, date: string, meeting: string,
+  total: number) {
   pageFrame(pdf, image, meeting, date, 2, total);
   pdf.setFont('helvetica', 'bold'); pdf.setFontSize(17); setText(pdf, INK);
-  pdf.text('MEETING AT A GLANCE', 11, 48);
-  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); setText(pdf, GREY);
-  pdf.text('Scenario leaders are not guaranteed winners. Coverage reflects usable data, not predictive confidence.', 11, 55);
-  setFill(pdf, NAVY); pdf.roundedRect(11, 62, 275, 10, 1, 1, 'F');
-  pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8.5); setText(pdf, WHITE);
-  pdf.text('RACE', 15, 68.5);
-  pdf.text('LATEST FORM LEADER', 40, 68.5);
-  pdf.text('RECENT BEST LEADER', 126, 68.5);
-  pdf.text('BOTH TOP 6', 211, 68.5);
-  pdf.text('COVER', 282, 68.5, { align: 'right' });
-  const rowHeight = Math.min(11, 109 / Math.max(1, results.length));
-  results.forEach((card, i) => {
-    const y = 73 + i * rowHeight;
-    if (i % 2 === 0) { setFill(pdf, PALE); pdf.rect(11, y, 275, rowHeight, 'F'); }
-    const s = stats(card);
-    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); setText(pdf, INK);
-    pdf.text(raceNumber(races[i], i), 15, y + rowHeight * 0.68);
-    const leader1 = safe(s.latest[0]?.Horse) || 'No projection';
-    const leader2 = safe(s.recent[0]?.Horse) || 'No projection';
-    fitText(pdf, leader1, 78, 8.5, 6); pdf.text(leader1, 40, y + rowHeight * 0.68, { maxWidth: 78 });
-    fitText(pdf, leader2, 78, 8.5, 6); pdf.text(leader2, 126, y + rowHeight * 0.68, { maxWidth: 78 });
-    pdf.setFontSize(8.5);
-    pdf.text(String(s.sharedTopSix.size), 221, y + rowHeight * 0.68);
-    pdf.text(`${s.coverage}%`, 282, y + rowHeight * 0.68, { align: 'right' });
-  });
-  pdf.setFont('helvetica', 'italic'); pdf.setFontSize(8); setText(pdf, GREY);
-  pdf.text('Both Top 6 = number of runners appearing in the top six of both scenarios.', 11, 187);
+  pdf.text('UNDERSTANDING RACE EDGE ANALYTICS', 11, 47);
+  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); setText(pdf, GREY);
+  pdf.text('How to interpret the rankings, projected margins and the limits of historical data.', 11, 54);
+
+  const definitions = [
+    { title: 'Latest Form', body: 'Uses each horse\'s most recent recorded performance available to the prediction model. This indicates recently demonstrated ability, not necessarily its best ability.' },
+    { title: 'Recent Best', body: 'Uses the strongest performance among the last three recorded runs considered by the model. It shows what a horse has recently demonstrated it can achieve, not what it must repeat today.' },
+    { title: 'Predicted Lengths Behind', body: 'Shows cumulative projected lengths behind the scenario leader. These are relative estimates, not guaranteed finishing margins. A displayed 0.0 L may reflect rounding.' },
+    { title: 'Agreement Between Scenarios', body: 'A gold marker identifies a runner in both Top 6 lists. This highlights overlap between the two views; it is not a calibrated winning probability.' },
+    { title: 'Data Coverage', body: 'The percentage of carded runners with usable projections in both modes. Higher coverage means more of the field is represented, not that the predictions are more certain.' },
+    { title: 'Race Competitiveness', body: 'The first-to-sixth spread shows how closely the top six rated horses are grouped in a scenario. A smaller spread indicates tighter projected margins, not greater certainty.' },
+    { title: 'Unrated Runners', body: 'A runner without a usable projection is not automatically weaker. Missing or insufficient data limits the model\'s ability to assess that horse.' },
+  ];
+  const left = definitions.slice(0, 4);
+  const right = definitions.slice(4);
+  const drawColumn = (items: typeof definitions, x: number) => {
+    let y = 65;
+    for (const item of items) {
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); setText(pdf, INK);
+      pdf.text(item.title, x, y);
+      setFill(pdf, GOLD); pdf.rect(x, y + 2, 128, 0.35, 'F');
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.1); setText(pdf, GREY);
+      const lines = pdf.splitTextToSize(item.body, 127) as string[];
+      pdf.text(lines, x, y + 8);
+      y += 23;
+    }
+  };
+  drawColumn(left, 11);
+  drawColumn(right, 153);
+  setFill(pdf, PALE); pdf.roundedRect(11, 163, 275, 26, 2, 2, 'F');
+  pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); setText(pdf, INK);
+  pdf.text('HOW TO USE RACE EDGE ANALYTICS', 16, 170);
+  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.1); setText(pdf, INK);
+  const guidance = 'Compare Latest Form with Recent Best to identify current form and demonstrated potential. Use the projected margins to judge how closely the rated runners are matched. Then assess pace, draw, distance, weights, conditions and other relevant form independently. Race Edge projects relative ability; it cannot guarantee that ability will be reproduced today.';
+  pdf.text(pdf.splitTextToSize(guidance, 264), 16, 176);
 }
 
 export async function downloadMeetingPdf({ date, club, meetingName, races, onProgress }: Params): Promise<void> {
@@ -306,7 +310,7 @@ export async function downloadMeetingPdf({ date, club, meetingName, races, onPro
   const total = races.length + 2;
   drawCover(pdf, image, date, meetingName, races, total);
   pdf.addPage();
-  drawSummary(pdf, image, date, meetingName, races, results, total);
+  drawDefinitions(pdf, image, date, meetingName, total);
   results.forEach((card, i) => {
     pdf.addPage();
     drawRace(pdf, image, races[i], card, date, meetingName, i + 3, total, i);
