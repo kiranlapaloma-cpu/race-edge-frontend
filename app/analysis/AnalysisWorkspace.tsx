@@ -635,6 +635,61 @@ function RaceIntelligenceSummary({
   );
 }
 
+// Descriptive only: compare the same runners over the last two 200m blocks.
+function relativeSpeedRetention(result: AnalysisResult, sourceRows: DataRow[]) {
+  const source = new Map(sourceRows.map(row => [csvHorse(row).toUpperCase(), row]));
+  const keys = result.step === 100 ? ['300_Time', '200_Time', '100_Time', 'Finish_Time'] : result.step === 200 ? ['200_Time', 'Finish_Time'] : [];
+  const runners = result.rows.map((row, index) => {
+    const horse = csvHorse(row);
+    const raw = source.get(horse.toUpperCase());
+    const times = keys.map(key => draftNumber(raw?.[key]));
+    if (result.distance_m < 400 || !keys.length || !times.every(t => t !== null && t > 0)) return { horse, index, change: null };
+    const valid = times as number[];
+    // For 100m data, sum times before converting to 200m speeds.
+    const half = valid.length / 2;
+    const previous = 200 / valid.slice(0, half).reduce((a, b) => a + b, 0);
+    const final = 200 / valid.slice(half).reduce((a, b) => a + b, 0);
+    const change = final - previous;
+    return { horse, index, change: Number.isFinite(change) ? change : null };
+  });
+  const comparable = runners.filter(r => r.change !== null);
+  const average = comparable.length >= 2 ? comparable.reduce((sum, r) => sum + r.change!, 0) / comparable.length : null;
+  return runners.map(r => ({ ...r, rsr: average === null || r.change === null ? null : r.change - average }))
+    .sort((a, b) => (b.rsr ?? -Infinity) - (a.rsr ?? -Infinity) || a.index - b.index);
+}
+
+function RelativeSpeedRetention({ result, sourceRows }: { result: AnalysisResult; sourceRows: DataRow[] }) {
+  const ranked = relativeSpeedRetention(result, sourceRows);
+  const valid = ranked.filter(r => r.rsr !== null);
+  const limit = Math.max(0.1, ...valid.map(r => Math.abs(r.rsr!)));
+  return (
+    <section style={{ ...panelStyle, marginTop: 16, marginBottom: 20 }} aria-label="Relative Speed Retention">
+      <div style={{ color: COLORS.gold, fontSize: 16, fontWeight: 800 }}>Relative Speed Retention</div>
+      <p style={{ color: COLORS.muted, fontSize: 12, lineHeight: 1.6, marginTop: 6 }}>Final 200m · Change in speed advantage relative to field (m/s)</p>
+      {valid.length < 2 && <p style={{ color: COLORS.muted, fontSize: 12 }}>At least two runners with complete final 400m sectionals are required.</p>}
+      {ranked.map(r => {
+        const v = r.rsr;
+        const rounded = v === null ? null : Number(v.toFixed(2));
+        const label = rounded === null ? '—' : `${rounded > 0 ? '+' : ''}${rounded.toFixed(2)}`;
+        const color = v === null || rounded === 0 ? COLORS.muted : v > 0 ? '#319b75' : '#c36565';
+        const width = v === null ? 0 : Math.abs(v) / limit * 50;
+        return <div key={`${r.horse}-${r.index}`} style={{ marginTop: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', fontSize: 13, marginBottom: 6 }}>
+            <strong style={{ overflowWrap: 'anywhere' }}>{r.horse || 'Unnamed runner'}</strong>
+            <span style={{ color, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{label}</span>
+          </div>
+          <div role="img" aria-label={`${r.horse}: ${label} metres per second`} style={{ position: 'relative', height: 15, background: COLORS.background, borderRadius: 4, overflow: 'hidden' }}>
+            {v !== null && <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${v < 0 ? 50 - width : 50}%`, width: `${width}%`, background: color, borderRadius: 3 }} />}
+            <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, background: COLORS.muted }} />
+          </div>
+        </div>;
+      })}
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, color: COLORS.muted, fontSize: 11, marginTop: 10 }}><span>Negative retention</span><span>0</span><span>Positive retention</span></div>
+      <p style={{ color: COLORS.muted, fontSize: 12, lineHeight: 1.6, marginBottom: 0 }}>Positive values indicate an improved relative speed advantage, not necessarily actual acceleration or stamina. {valid.length} of {ranked.length} runners comparable. Interpret alongside RPSS and Corrected Grind.</p>
+    </section>
+  );
+}
+
 export default function AnalysisWorkspace() {
   const [activeTab, setActiveTab] = useState<'metrics' | 'pace' | 'handicap' | 'plane' | 'summary'>('metrics');
   const [showImport, setShowImport] = useState(true);
@@ -1669,6 +1724,10 @@ export default function AnalysisWorkspace() {
             ratings={ratings && !ratingsDirty && ratings.ready ? ratings : null}
           />
           </div>
+        )}
+
+        {result && activeTab === 'pace' && (
+          <RelativeSpeedRetention result={result} sourceRows={rows} />
         )}
 
         {result && (
